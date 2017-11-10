@@ -1,29 +1,24 @@
 package hudson.scm.localclient;
 
-import com.mks.api.response.*;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.IntegrityCMProject;
-import hudson.scm.IntegrityConfigurable;
+import hudson.scm.api.session.ISession;
 import jenkins.security.Roles;
 import org.jenkinsci.remoting.RoleChecker;
-import org.jenkinsci.remoting.RoleSensitive;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.InterruptedException;
-import java.util.logging.Logger;
 
 /**
  * Created by asen on 06-06-2017.
  */
 public class IntegrityCreateSandboxTask implements FilePath.FileCallable<Boolean>
 {
-    private final String alternateWorkspaceDir;
+	private static final long serialVersionUID = -2075969423423385945L;
+	private final String alternateWorkspaceDir;
     private final IntegrityCMProject siProject;
-
-    private static final Logger LOGGER = Logger.getLogger(IntegrityCreateSandboxTask.class.getSimpleName());
     private final SandboxUtils sandboxUtil;
     private final TaskListener listener;
     private final String lineTerminator;
@@ -46,10 +41,10 @@ public class IntegrityCreateSandboxTask implements FilePath.FileCallable<Boolean
 		    throws IOException, InterruptedException
     {
 	FilePath workspace = sandboxUtil.getFilePath(workspaceFile, alternateWorkspaceDir);
-	try {
-	    return sandboxUtil.createSandbox(siProject, workspace,
+	try (ISession session = sandboxUtil.getLocalAPISession()){
+	    return sandboxUtil.verifyCreateSandbox(session, siProject, workspace,
 			    lineTerminator);
-	} catch (APIException e) {
+	} catch (Exception e) {
 	    listener.getLogger()
 			    .println("[LocalClient] IntegrityCreateSandboxTask Exception Caught : "+ e.getLocalizedMessage());
 	    e.printStackTrace(listener.getLogger());
